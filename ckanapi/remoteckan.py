@@ -9,6 +9,7 @@ from ckanapi.errors import CKANAPIError
 from ckanapi.common import (ActionShortcut, prepare_action,
     reverse_apicontroller_action)
 from ckanapi.version import __version__
+from requests_toolbelt import MultipartEncoder
 
 # add your sites here to remove parallel limits on ckanapi cli
 MY_SITES = ['localhost', '127.0.0.1', '[::1]']
@@ -83,7 +84,15 @@ class RemoteCKAN(object):
         return reverse_apicontroller_action(url, status, response)
 
     def _request_fn(self, url, data, headers, files, requests_kwargs):
-        r = requests.post(url, data=data, headers=headers, files=files, allow_redirects=False, **requests_kwargs)
+        if files:
+            upload = data.copy()
+            upload.update(files)
+            m = MultipartEncoder(upload)
+            upload_headers = headers.copy()
+            upload_headers['Content-Type'] = m.content_type
+            r = requests.post(url, data=m, headers=upload_headers, allow_redirects=False, **requests_kwargs)
+        else:
+            r = requests.post(url, data=data, headers=headers, files=files, allow_redirects=False, **requests_kwargs)
         # allow_redirects=False because: if a post is redirected (e.g. 301 due
         # to a http to https redirect), then the second request is made to the
         # new URL, but *without* the data. This gives a confusing "No request
