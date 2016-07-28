@@ -5,10 +5,12 @@ except ImportError:
     from urllib.request import Request, urlopen, HTTPError
     from urllib.parse import urlparse
 
+import os
 from ckanapi.errors import CKANAPIError
 from ckanapi.common import (ActionShortcut, prepare_action,
     reverse_apicontroller_action)
 from ckanapi.version import __version__
+from requests_toolbelt import MultipartEncoder
 
 # add your sites here to remove parallel limits on ckanapi cli
 MY_SITES = ['localhost', '127.0.0.1', '[::1]']
@@ -87,8 +89,18 @@ class RemoteCKAN(object):
         return reverse_apicontroller_action(url, status, response)
 
     def _request_fn(self, url, data, headers, files, requests_kwargs):
-        r = self.session.post(url, data=data, headers=headers, files=files,
-            allow_redirects=False, **requests_kwargs)
+        if files:
+            upload = data.copy()
+            for field_name, file_obj in files.items():
+                upload[field_name] = (os.path.basename(file_obj.name), file_obj)
+
+            m = MultipartEncoder(upload)
+            upload_headers = headers.copy()
+            upload_headers['Content-Type'] = m.content_type
+            r = self.session.post(url, data=m, headers=upload_headers, allow_redirects=False, **requests_kwargs)
+        else:
+            r = self.session.post(url, data=data, headers=headers,
+                allow_redirects=False, **requests_kwargs)
         # allow_redirects=False because: if a post is redirected (e.g. 301 due
         # to a http to https redirect), then the second request is made to the
         # new URL, but *without* the data. This gives a confusing "No request
