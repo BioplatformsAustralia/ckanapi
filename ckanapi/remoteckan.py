@@ -5,6 +5,7 @@ except ImportError:
     from urllib.request import Request, urlopen, HTTPError
     from urllib.parse import urlparse
 
+import os
 from ckanapi.errors import CKANAPIError
 from ckanapi.common import (ActionShortcut, prepare_action,
     reverse_apicontroller_action)
@@ -86,7 +87,9 @@ class RemoteCKAN(object):
     def _request_fn(self, url, data, headers, files, requests_kwargs):
         if files:
             upload = data.copy()
-            upload.update(files)
+            for field_name, file_obj in files.items():
+                upload[field_name] = (os.path.basename(file_obj.name), file_obj)
+
             m = MultipartEncoder(upload)
             upload_headers = headers.copy()
             upload_headers['Content-Type'] = m.content_type
