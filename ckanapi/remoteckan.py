@@ -38,6 +38,7 @@ class RemoteCKAN(object):
         self.apikey = apikey
         self.get_only = get_only
         self.session = session
+        self.verify_ssl = verify_ssl
         if not user_agent:
             user_agent = "ckanapi/{version} (+{url})".format(
                 version=__version__,
@@ -82,7 +83,7 @@ class RemoteCKAN(object):
         requests_kwargs = requests_kwargs or {}
         if not self.session:
             self.session = requests.Session()
-            self.session.verify = verify_ssl
+            self.session.verify = self.verify_ssl
         if self.get_only:
             status, response = self._request_fn_get(url, data_dict, headers, requests_kwargs)
         else:
