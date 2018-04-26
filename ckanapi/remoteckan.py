@@ -33,7 +33,7 @@ class RemoteCKAN(object):
     :param get_only: only use GET requests (default: False)
     :param session: session to use (default: None)
     """
-    def __init__(self, address, apikey=None, user_agent=None, get_only=False, session=None):
+    def __init__(self, address, apikey=None, user_agent=None, get_only=False, session=None, verify_ssl=True):
         self.address = address
         self.apikey = apikey
         self.get_only = get_only
@@ -82,6 +82,7 @@ class RemoteCKAN(object):
         requests_kwargs = requests_kwargs or {}
         if not self.session:
             self.session = requests.Session()
+            self.session.verify = verify_ssl
         if self.get_only:
             status, response = self._request_fn_get(url, data_dict, headers, requests_kwargs)
         else:
