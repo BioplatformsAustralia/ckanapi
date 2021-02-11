@@ -84,6 +84,7 @@ class RemoteCKAN(object):
         if not self.session:
             self.session = requests.Session()
             self.session.verify = self.verify_ssl
+            requests_kwargs['verify'] = self.verify_ssl
         if self.get_only:
             status, response = self._request_fn_get(url, data_dict, headers, requests_kwargs)
         else:
